@@ -14,7 +14,8 @@ interface IProps {
  * Perspective library adds load to HTMLElement prototype.
  * This interface acts as a wrapper for Typescript compiler.
  */
-interface PerspectiveViewerElement {
+interface PerspectiveViewerElement extends HTMLElement
+{
   load: (table: Table) => void,
 }
 
@@ -30,9 +31,10 @@ class Graph extends Component<IProps, {}> {
     return React.createElement('perspective-viewer');
   }
 
-  componentDidMount() {
+  componentDidMount() 
+  {
     // Get element to attach the table from the DOM.
-    const elem: PerspectiveViewerElement = document.getElementsByTagName('perspective-viewer')[0] as unknown as PerspectiveViewerElement;
+    const elem = document.getElementsByTagName('perspective-viewer')[0] as unknown as PerspectiveViewerElement;
 
     const schema = {
       stock: 'string',
@@ -48,12 +50,25 @@ class Graph extends Component<IProps, {}> {
       // Load the `table` in the `<perspective-viewer>` DOM reference.
 
       // Add more Perspective configurations here.
+      // continuous line graph is utilized with the view setup with the y_line style graph
+      elem.setAttribute('view', 'y_line');
+      // column0pivots property addition to the table allows the stock to be distinguishable on the x-axis or columns set up
+      elem.setAttribute('column-pivots', '["stock"]');
+      // row-pivots property addition takes care of the x-axis as timestamps
+      elem.setAttribute('row-pivots', '["timestamp"]');
+      // columns, Helps us focus on a particular part of a stock's data along the y-axis. With this we can print just the data we care about in this case, top_ask_price data for the stock
+      elem.setAttribute('columns', '["top_ask_price"]');
+      // The aggregates property helps us to handle the cases of duplicated data, observed earlier with just simply clicking the "Start Streaming Data" button
+      // In our case, a data point is considered unique if it has a unique ticker and timestamp. Duplicate prices are averaged out.
+      elem.setAttribute('aggregates', '{"stock": "distinct count", "top_ask_price": "avg", "top_bid_price": "avg", "timestamp": "distinct count"}');
+
+      
       elem.load(this.table);
     }
   }
 
   componentDidUpdate() {
-    // Everytime the data props is updated, insert the data into Perspective table
+    // every time the data props is updated, insert the data into Perspective table
     if (this.table) {
       // As part of the task, you need to fix the way we update the data props to
       // avoid inserting duplicated entries into Perspective table again.
